@@ -108,11 +108,13 @@ cat ~/.ssh/id_rsa
 ```
 
 File .htaccess [contoh file htaccess]
+```
 <IfModule mod_rewrite.c>
 RewriteEngine On
 # ditulis $$1, bukan $1 => karena saat deploy tanda $ terhapus
 RewriteRule ^(.*)$ public/$$1 [L]
 </IfModule>
+```
 
 ![Tambahkan variabel](https://raw.githubusercontent.com/dirumahrafif/devlogs/main/DEVOPS/images/1.png)
 ## 6. Buat Runner
@@ -130,7 +132,7 @@ sudo usermod -aG docker deployer
 ## 7. Buka project Laravel
 ### Tambahkan file .gitlab-ci.yml
 File .gitlab-ci.yml, [file berikut ini]
-
+```
 stages:
   - deploy
 
@@ -170,6 +172,8 @@ Deploy:
     - ssh $VAR_USER@$VAR_IP "docker exec webserver php artisan db:seed"
     - ssh $VAR_USER@$VAR_IP "docker exec webserver php artisan key:generate"
     - echo "A!"
+```
+
 ```
 VAR_DIREKTORI: "/home/rafifresume/APLIKASI/www"
 VAR_GIT_URL_TANPA_HTTP: "gitlab.com/dirumahrafif/deployer.git"
