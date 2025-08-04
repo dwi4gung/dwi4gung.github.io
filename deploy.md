@@ -107,7 +107,12 @@ Buka bagian settings > CI/CD > Variables kemudian tambahkan variabel, misalnya d
 cat ~/.ssh/id_rsa
 ```
 
-File htaccess bisa diambil dari [contoh file htaccess](https://gist.githubusercontent.com/dirumahrafif/71e5d2ebeada6a5be126cca638651461/raw/2fb47747a17d3a0c73de7001948e587340bf89b3/.htaccess)
+File .htaccess [contoh file htaccess]
+<IfModule mod_rewrite.c>
+RewriteEngine On
+# ditulis $$1, bukan $1 => karena saat deploy tanda $ terhapus
+RewriteRule ^(.*)$ public/$$1 [L]
+</IfModule>
 
 ![Tambahkan variabel](https://raw.githubusercontent.com/dirumahrafif/devlogs/main/DEVOPS/images/1.png)
 ## 6. Buat Runner
@@ -124,7 +129,47 @@ sudo usermod -aG docker deployer
 ```
 ## 7. Buka project Laravel
 ### Tambahkan file .gitlab-ci.yml
-File .gitlab-ci.yml, ambil contoh di [file berikut ini](https://gist.githubusercontent.com/dirumahrafif/71e5d2ebeada6a5be126cca638651461/raw/2fb47747a17d3a0c73de7001948e587340bf89b3/.gitlab-ci.yml)
+File .gitlab-ci.yml, [file berikut ini]
+
+stages:
+  - deploy
+
+Deploy:
+  stage: deploy
+  variables:
+    VAR_DIREKTORI: "/home/rafifresume/APLIKASI/www"
+    VAR_GIT_URL_TANPA_HTTP: "gitlab.com/dirumahrafif/namauser.git"
+    VAR_CLONE_KEY: "xxx"
+    VAR_USER: "xxx"
+    VAR_IP: "xxx"
+    VAR_FILE_ENV: $FILE_ENV
+    VAR_FILE_HTACCESS: $FILE_HTACCESS
+
+  before_script:
+    - "which ssh-agent || ( apt-get install openssh-client )"
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $VAR_IP >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+    - echo "$VAR_FILE_HTACCESS"
+
+  script:
+    - ssh $VAR_USER@$VAR_IP "git config --global safe.directory '*'"
+    - ssh $VAR_USER@$VAR_IP "if [ ! -d $VAR_DIREKTORI/.git ]; then echo 'Project belum ditemukan di direktori $VAR_DIREKTORI' && cd $VAR_DIREKTORI && git clone https://oauth2:$VAR_CLONE_KEY@$VAR_GIT_URL_TANPA_HTTP .; fi"
+    - ssh $VAR_USER@$VAR_IP "cd $VAR_DIREKTORI && git pull origin main && exit"
+    - ssh $VAR_USER@$VAR_IP "if [ -d $VAR_DIREKTORI/.env ]; then rm .env; fi"
+    - ssh $VAR_USER@$VAR_IP "cd $VAR_DIREKTORI && echo '$VAR_FILE_ENV' >> .env"
+    - ssh $VAR_USER@$VAR_IP "if [ -d $VAR_DIREKTORI/.htaccess ]; then rm .htaccess; fi"
+    - ssh $VAR_USER@$VAR_IP "cd $VAR_DIREKTORI && echo '$VAR_FILE_HTACCESS' >> .htaccess"
+    - ssh $VAR_USER@$VAR_IP "docker exec webserver composer install"
+    - ssh $VAR_USER@$VAR_IP "docker exec webserver composer update"
+    - ssh $VAR_USER@$VAR_IP "docker exec webserver php artisan migrate"
+    - ssh $VAR_USER@$VAR_IP "docker exec webserver php artisan db:seed"
+    - ssh $VAR_USER@$VAR_IP "docker exec webserver php artisan key:generate"
+    - echo "A!"
 ```
 VAR_DIREKTORI: "/home/rafifresume/APLIKASI/www"
 VAR_GIT_URL_TANPA_HTTP: "gitlab.com/dirumahrafif/deployer.git"
