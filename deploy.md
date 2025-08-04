@@ -194,3 +194,26 @@ Masuk ke menu access token:
 - Kemudian klik tombol **Create personal access token**
 
 ![gambar3](https://raw.githubusercontent.com/dirumahrafif/devlogs/main/DEVOPS/images/3.png)
+
+# Download speedtest script
+`wget https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py`
+
+# Run default test
+`Python speedtest.py`
+
+# List specify test servers
+`Python speedtest.py --list | grep Beijing`
+
+Sample output
+```
+12165) Indegene (Beijing, China) [1784.74 km]
+ 5505) Beijing Broadband Network (Beijing, China) [1784.74 km]
+ 6302) Beijing Fiber City (Beijing, China) [1784.74 km]
+ 5145) Beijing Unicom (Beijing, China) [1784.74 km]
+12065) Capital Online Data Service (Beijing, China) [1784.74 km]
+ 4713) China Mobile Group Beijing Co.Ltd (Beijing, China) [1784.74 km]
+ 4751) Beijing Telecom (Beijing, China) [1784.74 km]
+```
+
+# Test speed with a Beijing server (#4751)
+`Python speedtest.py --server=4751`
